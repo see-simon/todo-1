@@ -1,4 +1,4 @@
-import React,{useEffect} from 'react';
+import React,{useEffect, useState} from 'react';
 import { StatusBar } from 'expo-status-bar';
 import {
   StyleSheet,
@@ -7,8 +7,9 @@ import {
   TextInput,
   Text,
   FlatList,
-  TouchableOpacity,
+  TouchableOpacity,Modal,
   Alert,
+
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { db } from './firebase';
@@ -17,13 +18,7 @@ export default function App() {
   const [todos, setTodos] = React.useState([]);
   const [textInput, setTextInput] = React.useState('');
 
-  // React.useEffect(() => {
-  //   getTodosFromUserDevice();
-  // }, []);
-
-  // React.useEffect(() => {
-  //   saveTodoToUserDevice(todos);
-  // }, [todos]);
+ 
 
   const addTodo = () => {
     if (textInput == '') {
@@ -32,35 +27,12 @@ export default function App() {
       db.ref('Todo').push({
         textInput,completed:false
       })
-      // const newTodo = {
-      //   id: Math.random(),
-      //   task: textInput,
-      //   completed: false,
-      // };
-     // setTodos([...todos, newTodo]);
+    
       setTextInput('');
     }
   };
 
-  const saveTodoToUserDevice = async todos => {
-    // try {
-    //   const stringifyTodos = JSON.stringify(todos);
-    //   await AsyncStorage.setItem('todos', stringifyTodos);
-    // } catch (error) {
-    //   console.log(error);
-    // }
-  };
-
-  // const getTodosFromUserDevice = async () => {
-  //   try {
-  //     // const todos = await AsyncStorage.getItem('todos');
-  //     if (todos != null) {
-  //       setTodos(JSON.parse(todos));
-  //     }
-  //   } catch (error) {
-  //     console.log(error);
-  //   }
-  // };
+  
 
   useEffect(()=>{
         
@@ -86,23 +58,41 @@ export default function App() {
     setTodos(newTodosItem);
   };
 
-  const deleteTodo = todoId => {
-    const newTodosItem = todos.filter(item => item.id != todoId);
-    setTodos(newTodosItem);
-  };
+  const handleDelete=(key)=>{
+    db.ref('Todo').child(key).remove()
+
+    }
+    const updateTodo =(key)=>{
+      db.ref('Todo').child(key).update()
+    }
 
   const clearAllTodos = () => {
     Alert.alert('Confirm', 'Clear todos?', [
       {
         text: 'Yes',
-        onPress: () => setTodos([]),
+        onPress: () => db.ref('Todo').remove(),
       },
       {
         text: 'No',
       },
     ]);
   };
-  const ListItem = () => {
+
+  //
+  const [modalOpen,setModalOpen]=useState(false)
+  const [currentKey, setCurrentKey] = useState()
+
+  
+  //
+  const ListItem = ({todo}) => {
+
+    const handleUpdate =(key, text)=>{
+
+      setCurrentKey(key,)
+      setModalOpen(true)
+      setTextInput(text)
+    }
+
     return (
       
       <View style={styles.listItem}>
@@ -117,21 +107,50 @@ export default function App() {
               color: COLORS.primary,
               textDecorationLine: todo?.completed ? 'line-through' : 'none',
             }}>
-            {todo?.task}
+            {todo?.textInput}
           </Text>
         </View>
         {!todo?.completed && (
-          <TouchableOpacity onPress={() => markTodoComplete(todo.id)}>
+          <TouchableOpacity onPress={()=>handleUpdate(todo?.key, todo?.textInput)}>
+
             <View style={[styles.actionIcon, {backgroundColor: 'green'}]}>
               <Icon name="done" size={20} color="white" />
             </View>
           </TouchableOpacity>
         )}
-        <TouchableOpacity onPress={() => deleteTodo(todo.id)}>
+        <TouchableOpacity onPress={() => handleDelete(todo?.key)}>
           <View style={styles.actionIcon}>
             <Icon name="delete" size={20} color="white" />
           </View>
         </TouchableOpacity>
+
+
+        {/* <Modal visible={modalOpen} animationType='slide' >
+         {
+           modalOpen? 
+           ( db.ref('Todo').child(currentKey).update({textInput})):(<Text></Text>)
+
+         }
+            <View style={styles.modalContent}>
+            <TouchableOpacity
+            style={{justifyContent:'flex-start',width:40,height:50,borderRadius:10,
+        left:150}} 
+            onPress={()=>setModalOpen(false)}>
+                  <Icon name="close" size={30} color='black' />
+                  </TouchableOpacity> 
+            
+            <View>
+            <TextInput placeholder='Enter todo'
+              value={textInput}
+
+            />
+
+            <TouchableOpacity>
+            <Text>Update</Text>
+            </TouchableOpacity>
+            </View>
+            </View>
+            </Modal> */}
       </View>
     );
   };
