@@ -143,6 +143,7 @@ export default function App() {
             <TextInput placeholder='Enter todo'
               value={textInput}
 
+gv
             />
 
             <TouchableOpacity>
